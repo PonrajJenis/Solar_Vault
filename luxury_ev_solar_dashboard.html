@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarVault - Premium EV Energy Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background Vehicle Image */
+        .bg-vehicle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><rect width="800" height="600" fill="%23000"/><rect x="100" y="200" width="600" height="200" rx="30" fill="%23111" opacity="0.3"/><rect x="120" y="220" width="560" height="160" rx="20" fill="%23222" opacity="0.2"/><circle cx="200" cy="450" r="40" fill="%23333" opacity="0.4"/><circle cx="600" cy="450" r="40" fill="%23333" opacity="0.4"/></svg>') center/cover;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-icon {
+            position: relative;
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-icon:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-icon::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-icon:hover::after {
+            opacity: 1;
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffffff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #b0b0b0;
+            margin-bottom: 2rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+        }
+
+        /* Solar Animation */
+        .solar-animation {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .solar-rays {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ray {
+            position: absolute;
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.6), rgba(255, 165, 0, 0.3));
+            width: 2px;
+            height: 40px;
+            animation: solarRay 2s ease-in-out infinite;
+        }
+
+        .ray:nth-child(1) { left: 20%; animation-delay: 0s; }
+        .ray:nth-child(2) { left: 40%; animation-delay: 0.5s; }
+        .ray:nth-child(3) { left: 60%; animation-delay: 1s; }
+        .ray:nth-child(4) { left: 80%; animation-delay: 1.5s; }
+
+        @keyframes solarRay {
+            0%, 100% { transform: translateY(-50px); opacity: 0; }
+            50% { transform: translateY(150px); opacity: 1; }
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Achievements */
+        .achievements {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .achievement-badge {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: badgeGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #b0b0b0;
+            margin-top: 0.5rem;
+        }
+
+        /* Notifications */
+        .notifications {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            width: 350px;
+            z-index: 1000;
+        }
+
+        .notification {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(20px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .notification.premium {
+            border-color: rgba(255, 215, 0, 0.5);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Theme Selector */
+        .theme-selector {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .theme-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn.dark { background: linear-gradient(45deg, #0f0f23, #1a1a2e); }
+        .theme-btn.carbon { background: linear-gradient(45deg, #2c2c2c, #1a1a1a); }
+        .theme-btn.glass { background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Page Transitions */
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-icons {
+                gap: 1rem;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .notifications {
+                right: 1rem;
+                width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-vehicle"></div>
+    
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav-content">
+            <div class="logo">SolarVault</div>
+            <div class="nav-icons">
+                <div class="nav-icon" data-tooltip="Dashboard" onclick="showPage('dashboard')">⚡</div>
+                <div class="nav-icon" data-tooltip="Solar Analytics" onclick="showPage('solar')">☀️</div>
+                <div class="nav-icon" data-tooltip="Battery Health" onclick="showPage('battery')">🔋</div>
+                <div class="nav-icon" data-tooltip="Achievements" onclick="showPage('achievements')">🏆</div>
+                <div class="nav-icon" data-tooltip="Settings" onclick="showPage('settings')">⚙️</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="hero-section">
+                <h1 class="hero-title">Premium Solar Command Center</h1>
+                <p class="hero-subtitle">Your Defender is generating clean energy while you drive the future</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Real-time Solar Power -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Live Solar Intake</h3>
+                        <div class="card-icon">⚡</div>
+                    </div>
+                    <div class="solar-animation">
+                        <div class="solar-rays">
+                            <div class="ray"></div>
+                            <div class="ray"></div>
+                            <div class="ray"></div>
+                            <div class="ray"></div>
+                        </div>
+                    </div>
+                    <div class="card-value">3.2 kW</div>
+                    <div class="card-subtitle">Peak efficiency reached at 14:30</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%"></div>
+                        </div>
+                        <small>78% of maximum capacity</small>
+                    </div>
+                </div>
+
+                <!-- Battery Status -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Battery Health</h3>
+                        <div class="card-icon">🔋</div>
+                    </div>
+                    <div class="card-value">94%</div>
+                    <div class="card-subtitle">Excellent condition - Better than 89% of users</div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94%"></div>
+                        </div>
+                        <small>Range: 542 km available</small>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value">98°F</span>
+                            <span class="stat-label">Temperature</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">2.1A</span>
+                            <span class="stat-label">Current</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eco Impact -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Environmental Impact</h3>
+                        <div class="card-icon">🌱</div>
+                    </div>
+                    <div class="card-value">47 kg</div>
+                    <div class="card-subtitle">CO₂ offset this month</div>
+                    <div class="achievements">
+                        <div class="achievement-badge">
+                            🏆 Eco Warrior
+                        </div>
+                        <div class="achievement-badge">
+                            ⭐ Solar Master
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Insights -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">AI Recommendations</h3>
+                        <div class="card-icon">🧠</div>
+                    </div>
+                    <div class="card-subtitle" style="color: #00d4ff; font-size: 1rem; margin-bottom: 1rem;">
+                        Tomorrow's solar forecast: +32% efficiency
+                    </div>
+                    <div class="card-subtitle">
+                        💡 Activate Eco Mode for +18km range<br>
+                        🌤️ Optimal charging window: 11 AM - 3 PM<br>
+                        🎯 Your efficiency is 24% above regional average
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Solar Analytics Page -->
+        <div id="solar" class="page">
+            <div class="hero-section">
+                <h1 class="hero-title">Solar Analytics</h1>
+                <p class="hero-subtitle">Detailed solar energy generation and efficiency metrics</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Daily Generation</h3>
+                        <div class="card-icon">📊</div>
+                    </div>
+                    <div class="card-value">28.7 kWh</div>
+                    <div class="card-subtitle">Generated today</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value">$8.40</span>
+                            <span class="stat-label">Savings</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">156 km</span>
+                            <span class="stat-label">Free Range</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battery Health Page -->
+        <div id="battery" class="page">
+            <div class="hero-section">
+                <h1 class="hero-title">Battery Management</h1>
+                <p class="hero-subtitle">Advanced battery health monitoring and optimization</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Battery Longevity</h3>
+                        <div class="card-icon">🔋</div>
+                    </div>
+                    <div class="card-value">98%</div>
+                    <div class="card-subtitle">Health Score - Exceptional</div>
+                    <div class="card-subtitle" style="margin-top: 1rem;">
+                        💡 Tip: Avoid charging above 90% for daily use<br>
+                        🎯 Your battery health beats 92% of users<br>
+                        ⚡ Optimal charging completed
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Page -->
+        <div id="achievements" class="page">
+            <div class="hero-section">
+                <h1 class="hero-title">Solar Achievements</h1>
+                <p class="hero-subtitle">Your premium sustainability milestones</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Rewards Program</h3>
+                        <div class="card-icon">🏆</div>
+                    </div>
+                    <div class="card-value">Gold Tier</div>
+                    <div class="card-subtitle">Solar Points: 2,847</div>
+                    <div class="achievements">
+                        <div class="achievement-badge">🌟 Solar Pioneer</div>
+                        <div class="achievement-badge">⚡ Energy Efficient</div>
+                        <div class="achievement-badge">🏆 Eco Champion</div>
+                        <div class="achievement-badge">🎯 Range Master</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings" class="page">
+            <div class="hero-section">
+                <h1 class="hero-title">Premium Settings</h1>
+                <p class="hero-subtitle">Customize your luxury EV experience</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Voice Assistant</h3>
+                        <div class="card-icon">🎤</div>
+                    </div>
+                    <div class="card-subtitle">
+                        "Hey Defender, how much solar energy today?"<br>
+                        "What's my current range estimate?"<br>
+                        "Activate Solar Boost mode"
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">AR Integration</h3>
+                        <div class="card-icon">📱</div>
+                    </div>
+                    <div class="card-subtitle">
+                        Point your phone at the vehicle for:<br>
+                        • Real-time energy flow visualization<br>
+                        • 3D battery status overlay<br>
+                        • Virtual "Energy Halo" display
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="notifications">
+        <div class="notification premium">
+            <strong>☀️ Optimal Sunlight Detected!</strong><br>
+            Solar efficiency increased by 25%. Perfect conditions for charging.
+        </div>
+        <div class="notification">
+            <strong>🎯 Milestone Achieved!</strong><br>
+            You've saved $50 this month with solar charging.
+        </div>
+    </div>
+
+    <!-- Theme Selector -->
+    <div class="theme-selector">
+        <div class="theme-btn dark" onclick="setTheme('dark')" title="Dark Premium"></div>
+        <div class="theme-btn carbon" onclick="setTheme('carbon')" title="Carbon Fiber"></div>
+        <div class="theme-btn glass" onclick="setTheme('glass')" title="Minimalist Glass"></div>
+    </div>
+
+    <script>
+        // Page Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Add subtle haptic feedback simulation
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        // Theme Switching
+        function setTheme(theme) {
+            const body = document.body;
+            body.className = theme;
+            
+            switch(theme) {
+                case 'dark':
+                    body.style.background = 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)';
+                    break;
+                case 'carbon':
+                    body.style.background = 'linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 50%, #0f0f0f 100%)';
+                    break;
+                case 'glass':
+                    body.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.8) 100%)';
+                    break;
+            }
+        }
+
+        // Dynamic Stats Updates
+        function updateStats() {
+            const solarPower = document.querySelector('.card-value');
+            const currentPower = parseFloat(solarPower.textContent);
+            const newPower = (currentPower + (Math.random() - 0.5) * 0.5).toFixed(1);
+            
+            // Animate power changes
+            solarPower.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                solarPower.textContent = newPower + ' kW';
+                solarPower.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        // Voice Commands Simulation
+        function activateVoiceCommand() {
+            const commands = [
+                "Solar intake: 3.2 kilowatts and rising",
+                "Battery health: 94% - Excellent condition",
+                "Today's CO₂ offset: 47 kilograms",
+                "Estimated range: 542 kilometers"
+            ];
+            
+            const randomCommand = commands[Math.floor(Math.random() * commands.length)];
+            showNotification("🎤 Voice Command: " + randomCommand, 'premium');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'normal') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            
+            document.querySelector('.notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update stats every 5 seconds
+            setInterval(updateStats, 5000);
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification("🚗 Welcome back! Your Defender generated 28.7 kWh today.", 'premium');
+            }, 2000);
+            
+            // Simulate real-time updates
+            setTimeout(() => {
+                showNotification("⚡ Solar Boost activated! +15% efficiency unlocked.", 'normal');
+            }, 8000);
+        });
+
+        // Add click handlers for enhanced interactivity
+        document.querySelectorAll('.dashboard-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-5px)';
+                }, 100);
+            });
+        });
+
+        // Simulate AR activation
+        function activateAR() {
+            showNotification("📱 AR Mode: Point camera at vehicle for energy visualization", 'premium');
+        }
+
+        // Add AR button to settings
+        document.addEventListener('DOMContentLoaded', function() {
+            const arCard = document.querySelector('#settings .dashboard-card:last-child');
+            if (arCard) {
+                arCard.addEventListener('click', activateAR);
+            }
+        });
+    </script>
+</body>
+</html>
