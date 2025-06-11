@@ -347,6 +347,14 @@
             margin-bottom: 1rem;
             backdrop-filter: blur(20px);
             animation: slideIn 0.5s ease-out;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notification:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
         }
 
         .notification.premium {
@@ -354,9 +362,51 @@
             background: rgba(255, 215, 0, 0.1);
         }
 
+        .notification.premium:hover {
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .notification-content {
+            padding-right: 30px;
+        }
+
+        .notification.closing {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
 
         /* Theme Selector */
@@ -654,12 +704,18 @@
     <!-- Notifications -->
     <div class="notifications">
         <div class="notification premium">
-            <strong>☀️ Optimal Sunlight Detected!</strong><br>
-            Solar efficiency increased by 25%. Perfect conditions for charging.
+            <div class="notification-content">
+                <strong>☀️ Optimal Sunlight Detected!</strong><br>
+                Solar efficiency increased by 25%. Perfect conditions for charging.
+            </div>
+            <button class="notification-close" onclick="dismissNotification(this)">×</button>
         </div>
         <div class="notification">
-            <strong>🎯 Milestone Achieved!</strong><br>
-            You've saved $50 this month with solar charging.
+            <div class="notification-content">
+                <strong>🎯 Milestone Achieved!</strong><br>
+                You've saved $50 this month with solar charging.
+            </div>
+            <button class="notification-close" onclick="dismissNotification(this)">×</button>
         </div>
     </div>
 
@@ -732,17 +788,106 @@
             showNotification("🎤 Voice Command: " + randomCommand, 'premium');
         }
 
-        // Notification System
+        // Notification System with Close Button
         function showNotification(message, type = 'normal') {
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            notification.innerHTML = message;
+            
+            const content = document.createElement('div');
+            content.className = 'notification-content';
+            content.innerHTML = message;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'notification-close';
+            closeBtn.innerHTML = '×';
+            closeBtn.onclick = function() {
+                dismissNotification(this);
+            };
+            
+            notification.appendChild(content);
+            notification.appendChild(closeBtn);
             
             document.querySelector('.notifications').appendChild(notification);
             
+            // Auto-dismiss after 8 seconds if not manually closed
             setTimeout(() => {
-                notification.remove();
-            }, 5000);
+                if (notification.parentNode) {
+                    dismissNotification(closeBtn);
+                }
+            }, 8000);
+        }
+
+        // Dismiss notification with animation
+        function dismissNotification(closeBtn) {
+            const notification = closeBtn.parentNode;
+            notification.classList.add('closing');
+            
+            // Add haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+
+        // Enhanced notification system with more interactions
+        function showInteractiveNotification(title, message, type = 'normal', actions = []) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const content = document.createElement('div');
+            content.className = 'notification-content';
+            content.innerHTML = `<strong>${title}</strong><br>${message}`;
+            
+            // Add action buttons if provided
+            if (actions.length > 0) {
+                const actionDiv = document.createElement('div');
+                actionDiv.style.marginTop = '10px';
+                actionDiv.style.display = 'flex';
+                actionDiv.style.gap = '10px';
+                
+                actions.forEach(action => {
+                    const actionBtn = document.createElement('button');
+                    actionBtn.style.padding = '5px 10px';
+                    actionBtn.style.borderRadius = '8px';
+                    actionBtn.style.border = '1px solid rgba(0, 212, 255, 0.5)';
+                    actionBtn.style.background = 'rgba(0, 212, 255, 0.1)';
+                    actionBtn.style.color = '#00d4ff';
+                    actionBtn.style.cursor = 'pointer';
+                    actionBtn.style.fontSize = '0.8rem';
+                    actionBtn.textContent = action.text;
+                    actionBtn.onclick = () => {
+                        action.callback();
+                        dismissNotification(notification.querySelector('.notification-close'));
+                    };
+                    actionDiv.appendChild(actionBtn);
+                });
+                
+                content.appendChild(actionDiv);
+            }
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'notification-close';
+            closeBtn.innerHTML = '×';
+            closeBtn.onclick = function() {
+                dismissNotification(this);
+            };
+            
+            notification.appendChild(content);
+            notification.appendChild(closeBtn);
+            
+            document.querySelector('.notifications').appendChild(notification);
+            
+            // Auto-dismiss after 10 seconds for interactive notifications
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    dismissNotification(closeBtn);
+                }
+            }, 10000);
         }
 
         // Initialize App
@@ -750,16 +895,46 @@
             // Update stats every 5 seconds
             setInterval(updateStats, 5000);
             
-            // Show welcome notification
+            // Show welcome notification with actions
             setTimeout(() => {
-                showNotification("🚗 Welcome back! Your Defender generated 28.7 kWh today.", 'premium');
+                showInteractiveNotification(
+                    "🚗 Welcome back!",
+                    "Your Defender generated 28.7 kWh today.",
+                    'premium',
+                    [
+                        { text: 'View Details', callback: () => showPage('solar') },
+                        { text: 'Thanks', callback: () => console.log('User acknowledged') }
+                    ]
+                );
             }, 2000);
             
-            // Simulate real-time updates
+            // Simulate real-time updates with interactive options
             setTimeout(() => {
-                showNotification("⚡ Solar Boost activated! +15% efficiency unlocked.", 'normal');
+                showInteractiveNotification(
+                    "⚡ Solar Boost Available!",
+                    "+15% efficiency unlocked. Activate now?",
+                    'normal',
+                    [
+                        { text: 'Activate', callback: () => activateSolarBoost() },
+                        { text: 'Later', callback: () => console.log('Solar boost postponed') }
+                    ]
+                );
             }, 8000);
+            
+            // Weather-based notification
+            setTimeout(() => {
+                showNotification("🌤️ Perfect solar conditions detected! Peak efficiency in 30 minutes.", 'premium');
+            }, 15000);
         });
+
+        // Solar Boost Activation
+        function activateSolarBoost() {
+            showNotification("🚀 Solar Boost Activated! +15% efficiency enabled for next 2 hours.", 'premium');
+            // Add haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
 
         // Add click handlers for enhanced interactivity
         document.querySelectorAll('.dashboard-card').forEach(card => {
